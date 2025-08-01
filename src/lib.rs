@@ -120,6 +120,7 @@ macro_rules! impl_shotgun_intersection_iterator {
     };
 }
 
+// There has to be a better way...
 impl_shotgun_intersection_iterator!(4, 3, 3, 2, 1, 0);
 impl_shotgun_intersection_iterator!(8, 7, 7, 6, 5, 4, 3, 2, 1, 0);
 impl_shotgun_intersection_iterator!(16, 15, 15, 14, 13, 12, 11, 10, 9, 8, 7, 6, 5, 4, 3, 2, 1, 0);
