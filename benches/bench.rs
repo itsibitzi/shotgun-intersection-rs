@@ -1,6 +1,6 @@
 use criterion::{BenchmarkId, Criterion, criterion_group, criterion_main};
 use rand::prelude::*;
-use shotgun_intersection::{galloping_intersect, intersect as shotgun_intersect};
+use shotgun_intersection::{galloping_intersect, shotgun_intersect4, shotgun_intersect8};
 use std::{cmp::Ordering, hint::black_box};
 
 // Naive two-pointer intersection
@@ -46,20 +46,14 @@ fn make_data(len_a: usize, len_b: usize, overlap: f64, seed: u64) -> (Vec<u32>, 
 }
 
 fn bench_intersections(c: &mut Criterion) {
-    let sizes = [
-        (32, 100_000_000),
-        // (10_000, 10_000),
-        // (100_000, 100_000),
-        // (1_000_000, 1_000_000),
-        // (10_000, 1_000_000),
-    ];
+    let sizes = [(32, 100_000_000), (64, 100_000_000), (128, 100_000_000)];
     let overlap = 0.1;
     let seed = 42;
 
     for &(len_a, len_b) in &sizes {
         let (a, b) = make_data(len_a, len_b, overlap, seed);
 
-        let count1 = shotgun_intersect(&a, &b).count();
+        let count1 = shotgun_intersect4(&a, &b).count();
         let count2 = galloping_intersect(&a, &b).len();
         let count3 = naive_intersect(&a, &b).len();
 
@@ -67,11 +61,48 @@ fn bench_intersections(c: &mut Criterion) {
         assert_eq!(count2, count3);
 
         c.bench_with_input(
-            BenchmarkId::new("Shotgun", format!("{len_a}x{len_b}")),
+            BenchmarkId::new("Shotgun4", format!("{len_a}x{len_b}")),
             &(a.as_slice(), b.as_slice()),
             |b, (a, b_)| {
                 b.iter(|| {
-                    let count = shotgun_intersect(black_box(a), black_box(b_)).count();
+                    let count = shotgun_intersect4(black_box(a), black_box(b_)).count();
+                    black_box(count)
+                })
+            },
+        );
+
+        c.bench_with_input(
+            BenchmarkId::new("Shotgun8", format!("{len_a}x{len_b}")),
+            &(a.as_slice(), b.as_slice()),
+            |b, (a, b_)| {
+                b.iter(|| {
+                    let count = shotgun_intersect8(black_box(a), black_box(b_)).count();
+                    black_box(count)
+                })
+            },
+        );
+
+        c.bench_with_input(
+            BenchmarkId::new("Shotgun16", format!("{len_a}x{len_b}")),
+            &(a.as_slice(), b.as_slice()),
+            |b, (a, b_)| {
+                b.iter(|| {
+                    let count =
+                        shotgun_intersection::shotgun_intersect16(black_box(a), black_box(b_))
+                            .count();
+                    black_box(count)
+                })
+            },
+        );
+
+        c.bench_with_input(
+            BenchmarkId::new("Shotgun32", format!("{len_a}x{len_b}")),
+            &(a.as_slice(), b.as_slice()),
+            |b, (a, b_)| {
+                b.iter(|| {
+                    let count =
+                        shotgun_intersection::shotgun_intersect32(black_box(a), black_box(b_))
+                            .count();
                     black_box(count)
                 })
             },
